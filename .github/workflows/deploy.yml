@@ -1,0 +1,50 @@
+name: Build and Deploy to SFCC Sandbox
+
+on:
+  push:
+    branches:
+      - main  # or your deployment branch (e.g., develop or release)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Compile and build SFRA (optional - depends on your project)
+      - name: Compile and Build
+        run: |
+          npm run compile:js
+          npm run compile:scss
+          npm run build
+
+      # Create dw.json config file using GitHub secrets
+      - name: Create dw.json
+        run: |
+          echo '{
+            "hostname": "${{ secrets.SFCC_HOSTNAME }}",
+            "username": "${{ secrets.SFCC_USERNAME }}",
+            "password": "${{ secrets.SFCC_PASSWORD }}",
+            "code-version": "${{ secrets.SFCC_CODE_VERSION }}"
+          }' > dw.json
+
+      # Install dwupload
+      - name: Install dwupload
+        run: npm install -g dwupload
+
+      # Upload to SFCC
+      - name: Upload Code to SFCC
+        run: dwupload
